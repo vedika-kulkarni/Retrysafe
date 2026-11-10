@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: retrysafe-api
+    runtime: docker
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: retrysafe-db
+          property: connectionString
+      - key: NODE_ENV
+        value: production
+      - key: IDEMPOTENCY_WAIT_MS
+        value: "10000"
+databases:
+  - name: retrysafe-db
+    plan: basic-256mb
+    databaseName: retrysafe
+    user: retrysafe

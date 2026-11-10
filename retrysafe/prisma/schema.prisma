@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PaymentStatus {
+  PROCESSING
+  SUCCEEDED
+  FAILED
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  merchantId        String
+  idempotencyKey    String
+  requestHash       String
+  amount            Int           // smallest currency unit: paise for INR
+  currency          String        @default("INR")
+  status            PaymentStatus @default(PROCESSING)
+  providerChargeId  String?       @unique
+  failureCode       String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@unique([merchantId, idempotencyKey], map: "payments_merchant_idempotency_key")
+  @@index([createdAt])
+}
+
+// Durable mock-provider ledger. The unique key models a payment provider's own
+// idempotency guarantee and lets the demo prove exactly one simulated charge.
+model ProcessorCharge {
+  id             String   @id @default(cuid())
+  providerKey    String   @unique
+  amount         Int
+  currency       String
+  createdAt      DateTime @default(now())
+}
